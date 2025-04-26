@@ -18,7 +18,7 @@ const groupSchema = new mongoose.Schema(
     },
     groupImage: {
       type: String,
-      default: "/group-avatar.png",
+      default: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSSHTuuGuExr7F-k1Toog4jgi6PM1tnZexs6A&s",
     },
   },
   { timestamps: true }

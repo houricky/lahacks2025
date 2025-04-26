@@ -17,12 +17,12 @@ const ChatHeader = () => {
   if (!selectedUser && !selectedGroup) return null;
 
   return (
-    <div className="h-12 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4">
+    <div className="h-14 bg-gradient-to-r from-[#070738] to-[#0a0a45] border-b border-white/10 flex items-center justify-between px-4 shadow-md">
       <div className="flex items-center gap-3">
         {/* Icon */}
-        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+        <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-white/20">
           {selectedGroup && !selectedGroup.groupImage ? (
-            <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+            <div className="w-full h-full bg-gradient-to-br from-[#070738] to-[#110a5e] flex items-center justify-center">
               <Hash size={16} className="text-white" />
             </div>
           ) : (
@@ -40,10 +40,10 @@ const ChatHeader = () => {
 
         {/* Name and Status */}
         <div>
-          <h3 className="font-medium text-gray-900 dark:text-white">
+          <h3 className="font-medium text-white">
             {selectedGroup ? selectedGroup.name : selectedUser.name}
           </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-[#c8c8ff]/70">
             {selectedGroup ? (
               <span className="flex items-center gap-1">
                 <Users className="size-3" />
@@ -63,7 +63,7 @@ const ChatHeader = () => {
       <div className="flex items-center">
         <button 
           onClick={handleClose}
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+          className="p-2 rounded-full hover:bg-white/10 text-[#c8c8ff]/70 hover:text-white transition-colors"
         >
           <X size={18} />
         </button>

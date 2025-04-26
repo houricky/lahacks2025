@@ -16,7 +16,7 @@ export const useChatStore = create((set, get) => ({
   getUsers: async () => {
     set({ isUsersLoading: true });
     try {
-      const res = await axiosInstance.get("/message/users");
+      const res = await axiosInstance.get("/message/conversations");
       set({ users: res.data });
     } catch (error) {
       toast.error(error.response.data.message);
@@ -63,23 +63,30 @@ export const useChatStore = create((set, get) => ({
 
   sendMessage: async (messageData) => {
     const { selectedUser, selectedGroup, messages } = get();
+    const { authUser } = useAuthStore.getState();
     try {
       let res;
       if (selectedGroup) {
-        res = await axiosInstance.post(
-          `/group/${selectedGroup._id}/messages`,
-          {
-            ...messageData,
-            groupId: selectedGroup._id,
-          }
-        );
+        res = await axiosInstance.post(`/group/${selectedGroup._id}/messages`, {
+          ...messageData,
+          groupId: selectedGroup._id,
+        });
+        const enrichedMessage = {
+          ...res.data,
+          senderId: {
+            _id: authUser._id,
+            name: authUser.name,
+            profilePic: authUser.profilePic,
+          },
+        };
+        set({ messages: [...messages, enrichedMessage] });
       } else {
         res = await axiosInstance.post(
           `/message/send/${selectedUser._id}`,
           messageData
         );
+        set({ messages: [...messages, res.data] });
       }
-      set({ messages: [...messages, res.data] });
     } catch (error) {
       toast.error(error.response.data.message);
     }
@@ -144,8 +151,16 @@ export const useChatStore = create((set, get) => ({
 
     socket.on("newGroupMessage", (newMessage) => {
       if (selectedGroup && newMessage.groupId === selectedGroup._id) {
+        const messageWithSender = {
+          ...newMessage,
+          senderId: {
+            _id: newMessage.senderId,
+            name: newMessage.senderName,
+            profilePic: newMessage.senderProfilePic,
+          },
+        };
         set({
-          messages: [...get().messages, newMessage],
+          messages: [...get().messages, messageWithSender],
         });
       }
     });
@@ -155,8 +170,109 @@ export const useChatStore = create((set, get) => ({
     const socket = useAuthStore.getState().socket;
     socket.off("newMessage");
     socket.off("newGroupMessage");
+    socket.off("messageDeleted");
+  },
+
+  deleteMessage: async (messageId) => {
+    try {
+      await axiosInstance.delete(`/message/${messageId}`);
+      set((state) => ({
+        messages: state.messages.filter((msg) => msg._id !== messageId),
+      }));
+      toast.success("Message deleted successfully");
+    } catch (error) {
+      toast.error(error.response.data.message);
+    }
   },
 
   setSelectedUser: (selectedUser) => set({ selectedUser, selectedGroup: null }),
-  setSelectedGroup: (selectedGroup) => set({ selectedGroup, selectedUser: null }),
+  setSelectedGroup: (selectedGroup) =>
+    set({ selectedGroup, selectedUser: null }),
+
+  getGroupedMessages: () => {
+    const { messages, selectedUser, selectedGroup } = get();
+    const { authUser } = useAuthStore.getState();
+
+    if (!messages.length) return [];
+
+    const getMessageSender = (message) => {
+      if (selectedGroup) {
+        return message.senderId;
+      }
+      return message.senderId === authUser._id ? authUser : selectedUser;
+    };
+
+    const groupedMessages = [];
+
+    messages.forEach((message, index) => {
+      const sender = getMessageSender(message);
+      const isCurrentUser = selectedGroup
+        ? message.senderId._id === authUser._id
+        : message.senderId === authUser._id;
+
+      const previousMessage = messages[index - 1];
+      const messageDate = new Date(message.createdAt).getTime();
+      const previousMessageDate = previousMessage
+        ? new Date(previousMessage.createdAt).getTime()
+        : 0;
+      const timeDiff = messageDate - previousMessageDate;
+
+      const currentSenderId = selectedGroup
+        ? message.senderId._id
+        : message.senderId;
+      const previousSenderId = previousMessage
+        ? selectedGroup
+          ? previousMessage.senderId._id
+          : previousMessage.senderId
+        : null;
+
+      const shouldGroup =
+        previousMessage &&
+        previousSenderId === currentSenderId &&
+        timeDiff < 5 * 60 * 1000;
+
+      if (shouldGroup) {
+        groupedMessages[groupedMessages.length - 1].messages.push(message);
+      } else {
+        groupedMessages.push({
+          sender,
+          isCurrentUser,
+          messages: [message],
+          date: new Date(message.createdAt),
+        });
+      }
+    });
+
+    return groupedMessages;
+  },
+
+  startConversation: async (email) => {
+    try {
+      const res = await axiosInstance.post("/message/start-conversation", {
+        email,
+      });
+      return res.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  subscribeToConversations: () => {
+    const socket = useAuthStore.getState().socket;
+
+    socket.on("newConversation", ({ user, message }) => {
+      set((state) => {
+        // Check if user already exists in conversations
+        const userExists = state.users.some((u) => u._id === user._id);
+        if (!userExists) {
+          return { users: [...state.users, user] };
+        }
+        return state;
+      });
+    });
+
+    return () => {
+      socket.off("newConversation");
+    };
+  },
 }));

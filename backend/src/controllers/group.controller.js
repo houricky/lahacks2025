@@ -1,6 +1,7 @@
 import Group from "../models/group.model.js";
 import Message from "../models/message.model.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
+import User from "../models/user.model.js";
 
 export const createGroup = async (req, res) => {
   try {
@@ -43,7 +44,8 @@ export const getGroupMessages = async (req, res) => {
   try {
     const { groupId } = req.params;
     const messages = await Message.find({ groupId })
-      .populate("senderId", "-password");
+      .populate("senderId", "name profilePic email")
+      .sort({ createdAt: 1 });
     res.status(200).json(messages);
   } catch (error) {
     console.error("Error in getGroupMessages: ", error.message);
@@ -59,7 +61,9 @@ export const sendGroupMessage = async (req, res) => {
     // Verify user is a member of the group
     const group = await Group.findOne({ _id: groupId, members: senderId });
     if (!group) {
-      return res.status(403).json({ error: "You are not a member of this group" });
+      return res
+        .status(403)
+        .json({ error: "You are not a member of this group" });
     }
 
     let imageUrl;
@@ -78,12 +82,19 @@ export const sendGroupMessage = async (req, res) => {
 
     await newMessage.save();
 
-    // Emit message to all group members
+    // Get sender information
+    const sender = await User.findById(senderId).select("name profilePic");
+
+    // Emit message to all group members with sender information
     group.members.forEach((memberId) => {
       if (memberId.toString() !== senderId.toString()) {
         const memberSocketId = getReceiverSocketId(memberId);
         if (memberSocketId) {
-          io.to(memberSocketId).emit("newGroupMessage", newMessage);
+          io.to(memberSocketId).emit("newGroupMessage", {
+            ...newMessage.toObject(),
+            senderName: sender.name,
+            senderProfilePic: sender.profilePic,
+          });
         }
       }
     });
@@ -102,7 +113,9 @@ export const addGroupMembers = async (req, res) => {
 
     const group = await Group.findOne({ _id: groupId, admin: userId });
     if (!group) {
-      return res.status(403).json({ error: "You are not the admin of this group" });
+      return res
+        .status(403)
+        .json({ error: "You are not the admin of this group" });
     }
 
     group.members = [...new Set([...group.members, ...newMembers])];
@@ -122,7 +135,9 @@ export const removeGroupMembers = async (req, res) => {
 
     const group = await Group.findOne({ _id: groupId, admin: userId });
     if (!group) {
-      return res.status(403).json({ error: "You are not the admin of this group" });
+      return res
+        .status(403)
+        .json({ error: "You are not the admin of this group" });
     }
 
     group.members = group.members.filter(
@@ -135,4 +150,4 @@ export const removeGroupMembers = async (req, res) => {
     console.error("Error in removeGroupMembers: ", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
-}; 
+};

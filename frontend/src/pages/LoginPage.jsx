@@ -76,7 +76,7 @@ const GlassCard = ({ children }) => {
       className="relative backdrop-blur-md bg-white/10 border border-white/20 rounded-2xl shadow-xl overflow-hidden w-full max-w-md"
     >
       {/* Gradient accent */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/30 via-purple-500/20 to-pink-500/20 opacity-70 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#070738]/30 via-[#0a0a4d]/20 to-[#110a5e]/20 opacity-70 pointer-events-none" />
       
       {/* Content */}
       <div className="relative z-10 p-8">{children}</div>
@@ -97,9 +97,9 @@ const FormField = ({ type, icon, placeholder, value, onChange, name }) => {
   
   return (
     <div className={`flex items-center bg-white/10 rounded-xl border overflow-hidden transition-all duration-200 ${
-      isFocused ? "border-indigo-400 shadow-sm shadow-indigo-400/20" : "border-white/20"
+      isFocused ? "border-[#070738] shadow-sm shadow-[#070738]/20" : "border-white/20"
     }`}>
-      <div className="flex items-center justify-center w-12 text-indigo-200">
+      <div className="flex items-center justify-center w-12 text-[#c8c8ff]">
         {icon}
       </div>
       <div className="flex-1 relative">
@@ -112,14 +112,14 @@ const FormField = ({ type, icon, placeholder, value, onChange, name }) => {
           onChange={onChange}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          className="w-full px-3 py-4 bg-transparent text-white placeholder-indigo-300/60 outline-none"
+          className="w-full px-3 py-4 bg-transparent text-white placeholder-[#c8c8ff]/60 outline-none"
         />
         {type === "password" && (
           <button
             type="button"
             tabIndex={-1}
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-indigo-300 hover:text-indigo-100 transition"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#c8c8ff] hover:text-white transition"
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
@@ -170,7 +170,7 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
       {/* Animated background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-violet-900 to-indigo-900 z-0" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#070738] via-[#090952] to-[#0a0a45] z-0" />
       
       {/* Animated stars */}
       <ParticleBackground />
@@ -184,7 +184,7 @@ const LoginPage = () => {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-200 to-white"
+              className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-[#c8c8ff] to-white"
             >
               Login
             </motion.h1>
@@ -193,7 +193,7 @@ const LoginPage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-indigo-200 mt-2"
+              className="text-[#c8c8ff] mt-2"
             >
               Enter your email below to log in to your account
             </motion.p>
@@ -230,7 +230,7 @@ const LoginPage = () => {
               whileTap={{ scale: 0.98 }}
               disabled={isLoggingIn}
               type="submit"
-              className="w-full py-4 mt-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl text-white font-medium flex items-center justify-center gap-2 transition-all disabled:opacity-70"
+              className="w-full py-4 mt-2 bg-gradient-to-r from-[#070738] to-[#110a5e] hover:from-[#0a0a45] hover:to-[#150c70] rounded-xl text-white font-medium flex items-center justify-center gap-2 transition-all disabled:opacity-70"
             >
               {isLoggingIn ? (
                 <>
@@ -257,7 +257,7 @@ const LoginPage = () => {
             className="flex items-center my-6"
           >
             <div className="flex-grow border-t border-white/10"></div>
-            <span className="mx-4 text-indigo-200 text-sm">or continue with</span>
+            <span className="mx-4 text-[#c8c8ff] text-sm">or continue with</span>
             <div className="flex-grow border-t border-white/10"></div>
           </motion.div>
           
@@ -307,9 +307,9 @@ const LoginPage = () => {
             transition={{ delay: 0.6 }}
             className="mt-8 text-center"
           >
-            <p className="text-indigo-200">
+            <p className="text-[#c8c8ff]">
               Don't have an account?{" "}
-              <Link to="/signup" className="text-white hover:text-indigo-300 font-medium transition-colors">
+              <Link to="/signup" className="text-white hover:text-[#a0a0ff] font-medium transition-colors">
                 Sign up
               </Link>
             </p>

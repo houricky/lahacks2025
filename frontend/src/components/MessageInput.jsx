@@ -48,19 +48,19 @@ const MessageInput = () => {
   };
 
   return (
-    <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+    <div className="px-4 py-3 bg-[#070738] border-t border-white/10">
       {imagePreview && (
         <div className="mb-3 flex items-center gap-2">
           <div className="relative">
             <img
               src={imagePreview}
               alt="Preview"
-              className="w-20 h-20 object-cover rounded-md border border-gray-200 dark:border-gray-700"
+              className="w-20 h-20 object-cover rounded-md border border-white/20"
             />
             <button
               onClick={removeImage}
-              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gray-800 dark:bg-gray-700
-              flex items-center justify-center text-white hover:bg-gray-700 dark:hover:bg-gray-600"
+              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#070738] 
+              flex items-center justify-center text-white hover:bg-[#0a0a45] border border-white/20"
               type="button"
             >
               <Send className="size-3 rotate-45" />
@@ -70,17 +70,17 @@ const MessageInput = () => {
       )}
 
       <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-        <div className="flex-1 flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2">
+        <div className="flex-1 flex items-center gap-2 bg-[#0a0a45]/70 rounded-lg px-3 py-2 border border-white/10">
           <button
             type="button"
-            className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            className="text-[#c8c8ff]/70 hover:text-white transition-colors"
             onClick={() => fileInputRef.current?.click()}
           >
             <Paperclip size={20} />
           </button>
           <input
             type="text"
-            className="flex-1 bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none"
+            className="flex-1 bg-transparent text-white placeholder-[#c8c8ff]/50 focus:outline-none"
             placeholder="Message"
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -95,7 +95,7 @@ const MessageInput = () => {
         </div>
         <button
           type="submit"
-          className="p-2 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="p-2 rounded-full bg-[#070738] text-white hover:bg-[#0a0a45] transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-white/20"
           disabled={!text.trim() && !imagePreview}
         >
           <Send size={20} />
