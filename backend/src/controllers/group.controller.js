@@ -2,6 +2,8 @@ import Group from "../models/group.model.js";
 import Message from "../models/message.model.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
 import User from "../models/user.model.js";
+import { getGeminiResponse } from "../lib/gemini.js";
+import cloudinary from "../lib/cloudinary.js";
 
 export const createGroup = async (req, res) => {
   try {
@@ -98,6 +100,50 @@ export const sendGroupMessage = async (req, res) => {
         }
       }
     });
+
+    // Check if message contains @nexus
+    if (text && text.includes("@nexus")) {
+      const question = text.split("@nexus")[1].trim();
+      try {
+        // Get or create the AI user
+        let aiUser = await User.findOne({ email: "nexusai@nexus.com" });
+        if (!aiUser) {
+          aiUser = await User.create({
+            name: "Nexus AI",
+            email: "nexusai@nexus.com",
+            password: "placeholder", // We'll never use this
+            profilePic: "https://www.gravatar.com/avatar/?d=mp",
+          });
+        }
+
+        const aiResponse = await getGeminiResponse(question);
+
+        const aiMessage = new Message({
+          senderId: aiUser._id,
+          groupId, // Keep the same groupId
+          text: aiResponse,
+          messageType: "group",
+          isAI: true,
+        });
+
+        await aiMessage.save();
+
+        // Emit AI response to all group members
+        group.members.forEach((memberId) => {
+          const memberSocketId = getReceiverSocketId(memberId);
+          if (memberSocketId) {
+            io.to(memberSocketId).emit("newGroupMessage", {
+              ...aiMessage.toObject(),
+              senderName: "Nexus AI",
+              senderProfilePic: "https://www.gravatar.com/avatar/?d=mp",
+            });
+          }
+        });
+      } catch (error) {
+        console.error("Error getting AI response:", error);
+        // Don't send error to client, just log it
+      }
+    }
 
     res.status(201).json(newMessage);
   } catch (error) {
