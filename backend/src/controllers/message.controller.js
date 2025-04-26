@@ -174,7 +174,6 @@ export const sendMessage = async (req, res) => {
 
         // Get or create AI agent for this conversation
         if (!conversation.aiAgentId) {
-          // Create new AI agent for this conversation
           conversation.aiAgentId = `agent_${conversation._id}`;
           await conversation.save();
         }
@@ -188,12 +187,41 @@ export const sendMessage = async (req, res) => {
         // Get sender's name
         const sender = await User.findById(senderId).select("name");
 
-        const aiResponse = await getGeminiResponse(
-          question,
-          conversation.aiAgentId,
-          participantNames,
-          sender.name
-        );
+        let aiResponse;
+
+        // Check if an image is included
+        if (image) {
+          // Create multimodal prompt parts for Gemini
+          const promptParts = [
+            {
+              inlineData: {
+                mimeType: "image/jpeg",
+                data: image.split(",")[1],
+              },
+            },
+            {
+              text: question
+                ? `Please analyze this image and respond to: "${question}". Keep your response focused and concise.`
+                : `Please briefly describe what you see in this image. Keep your response focused and concise.`,
+            },
+          ];
+
+          aiResponse = await getGeminiResponse(
+            null,
+            conversation.aiAgentId,
+            participantNames,
+            sender.name,
+            promptParts
+          );
+        } else {
+          // Regular text-only response
+          aiResponse = await getGeminiResponse(
+            question,
+            conversation.aiAgentId,
+            participantNames,
+            sender.name
+          );
+        }
 
         const aiMessage = new Message({
           senderId: aiUser._id,
@@ -364,106 +392,10 @@ export const sendGroupMessage = async (req, res) => {
     const { groupId } = req.params;
     const senderId = req.user._id;
 
-    let imageUrl;
-    if (image) {
-      const uploadResponse = await cloudinary.uploader.upload(image);
-      imageUrl = uploadResponse.secure_url;
-    }
-
-    const newMessage = new Message({
-      senderId,
-      groupId,
-      text,
-      image: imageUrl,
-      messageType: "group",
+    // Forward to group.controller.js
+    return res.status(400).json({
+      error: "Group messages should be handled by group.controller.js",
     });
-
-    await newMessage.save();
-
-    // Get sender information
-    const sender = await User.findById(senderId).select("name profilePic");
-
-    // Get group members
-    const group = await Group.findById(groupId);
-    if (!group) {
-      return res.status(404).json({ error: "Group not found" });
-    }
-
-    // Check if message contains @nexus
-    if (text && text.includes("@nexus")) {
-      const question = text.split("@nexus")[1].trim();
-
-      try {
-        // Get or create the AI user
-        let aiUser = await User.findOne({ email: "nexusai@nexus.com" });
-        if (!aiUser) {
-          aiUser = await User.create({
-            name: "Nexus AI",
-            email: "nexusai@nexus.com",
-            password: "placeholder",
-            profilePic: "https://www.gravatar.com/avatar/?d=mp",
-          });
-        }
-
-        // Get group member names for context
-        const members = await User.find({
-          _id: { $in: group.members },
-        }).select("name");
-        const memberNames = members.map((m) => m.name);
-
-        // Get sender's name
-        const sender = await User.findById(senderId).select("name");
-
-        const aiResponse = await getGeminiResponse(
-          question,
-          `group_${groupId}`,
-          memberNames,
-          sender.name
-        );
-
-        const aiMessage = new Message({
-          senderId: aiUser._id,
-          groupId,
-          text: aiResponse,
-          messageType: "group",
-          isAI: true,
-        });
-
-        await aiMessage.save();
-
-        // Emit AI response to all group members
-        group.members.forEach(async (memberId) => {
-          const memberSocketId = getReceiverSocketId(memberId);
-          if (memberSocketId) {
-            io.to(memberSocketId).emit("newGroupMessage", {
-              ...aiMessage.toObject(),
-              senderName: "Nexus AI",
-              senderProfilePic: "https://www.gravatar.com/avatar/?d=mp",
-              groupId: group._id,
-            });
-          }
-        });
-      } catch (error) {
-        console.error("Error getting AI response:", error);
-      }
-    }
-
-    // Emit to all group members
-    group.members.forEach(async (memberId) => {
-      if (memberId.toString() !== senderId.toString()) {
-        const memberSocketId = getReceiverSocketId(memberId);
-        if (memberSocketId) {
-          io.to(memberSocketId).emit("newGroupMessage", {
-            ...newMessage.toObject(),
-            senderName: sender.name,
-            senderProfilePic: sender.profilePic,
-            groupId: group._id,
-          });
-        }
-      }
-    });
-
-    res.status(201).json(newMessage);
   } catch (error) {
     console.log("Error in sendGroupMessage: ", error.message);
     res.status(500).json({ error: "Internal server error" });
