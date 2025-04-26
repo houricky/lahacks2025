@@ -55,6 +55,7 @@ export const sendMessage = async (req, res) => {
       receiverId,
       text,
       image: imageUrl,
+      messageType: "direct",
     });
 
     await newMessage.save();
